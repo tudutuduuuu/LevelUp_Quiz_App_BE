@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QuizAPI.Models;
+using QuizAPI.RabitMQ;
 
 namespace QuizAPI.Controllers
 {
@@ -15,10 +16,12 @@ namespace QuizAPI.Controllers
     public class ParticipantController : ControllerBase
     {
         private readonly QuizDbContext _context;
+        private readonly IRabitMQProducer _rabitMQProducer;
 
-        public ParticipantController(QuizDbContext context)
+        public ParticipantController(QuizDbContext context, IRabitMQProducer rabitMQProducer)
         {
             _context = context;
+            _rabitMQProducer = rabitMQProducer;
         }
 
         // GET: api/Participant
@@ -56,6 +59,8 @@ namespace QuizAPI.Controllers
             Participant participant = _context.Participants.Find(id);
             participant.Score = _participantResult.Score;
             participant.TimeTaken = _participantResult.TimeTaken;
+            // send the inserted product data to the queue and consumer will listening this data from queue
+            _rabitMQProducer.SendParticipantMessage(participant);
 
             _context.Entry(participant).State = EntityState.Modified;
 
