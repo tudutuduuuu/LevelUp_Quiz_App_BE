@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Interface.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -17,22 +18,40 @@ namespace QuizAPI.Controllers
     {
         private readonly QuizDbContext _context;
         private readonly IRabitMQProducer _rabitMQProducer;
-
-        public ParticipantController(QuizDbContext context, IRabitMQProducer rabitMQProducer)
+        private readonly IParticipantServices _participantServices;
+		public ParticipantController(QuizAPI.Models.QuizDbContext context, IRabitMQProducer rabitMQProducer , IParticipantServices participantServices)
         {
             _context = context;
             _rabitMQProducer = rabitMQProducer;
+            _participantServices = participantServices;
         }
 
-        // GET: api/Participant
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Participant>>> GetParticipants()
-        {
-            return await _context.Participants.ToListAsync();
-        }
+		// GET: api/Participant
+		[HttpGet]
+		public ActionResult<IEnumerable<Participant>> GetParticipants()
+		{
+			var list = new List<Participant>();
+			var listAll = _participantServices.GetAll();
+			if (listAll.Any())
+			{
+				foreach (var participant in listAll)
+				{
+					Participant participant1 = new Participant()
+					{
+						Email = participant.Email,
+						Name = participant.Name,
+						ParticipantId = participant.ParticipantId,
+						Score = participant.Score,
+						TimeTaken = participant.TimeTaken,
+					};
+					list.Add(participant1);
+				}
+			}
+			return list;
+		}
 
-        // GET: api/Participant/5
-        [HttpGet("{id}")]
+		// GET: api/Participant/5
+		[HttpGet("{id}")]
         public async Task<ActionResult<Participant>> GetParticipant(int id)
         {
             var participant = await _context.Participants.FindAsync(id);

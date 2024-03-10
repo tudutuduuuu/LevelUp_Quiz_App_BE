@@ -1,3 +1,4 @@
+using Injection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using QuizAPI.Models;
@@ -16,7 +17,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddDbContext<QuizDbContext>(options =>
 options.UseSqlServer(builder.Configuration.GetConnectionString("DevConnection")));
-
+Injection.Injection.Inject(builder.Services);
 var app = builder.Build();
 
 app.UseCors(options =>
